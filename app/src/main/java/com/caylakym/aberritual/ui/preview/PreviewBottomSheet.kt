@@ -14,13 +14,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.caylakym.aberritual.core.sensor.MotionSensorManager
 import com.caylakym.aberritual.data.model.EffectMode
 import com.caylakym.aberritual.ui.creator.StudioUiState
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +62,8 @@ fun PreviewBottomSheet(
     var isGyroActive by remember { mutableStateOf(true) }
     var touchTilt by remember { mutableFloatStateOf(0.0f) }
     var glViewInstance by remember { mutableStateOf<LenticularGLView?>(null) }
+
+    val sensitivityCheckpoints = remember { listOf(10f, 15f, 20f, 25f, 30f, 45f, 60f) }
 
     LaunchedEffect(glViewInstance, uiState.layers, uiState.effectMode, uiState.lpi, uiState.chromaticAberration) {
         glViewInstance?.updateConfig(uiState.toWallpaperConfig(), uiState.layerFiles)
@@ -92,7 +96,7 @@ fun PreviewBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -107,19 +111,19 @@ fun PreviewBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth(0.72f)
                     .aspectRatio(9f / 16f)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .pointerInput(isGyroActive) {
                         if (!isGyroActive) {
                             detectHorizontalDragGestures { change, dragAmount ->
                                 change.consume()
                                 val delta = dragAmount / size.width
-                                touchTilt = (touchTilt + delta * 2.0f).coerceIn(-1.0f, 1.0f)
+                                touchTilt = (touchTilt + delta * 2.2f).coerceIn(-1.0f, 1.0f)
                                 glViewInstance?.setTilt(touchTilt)
                             }
                         }
                     },
-                shape = RoundedCornerShape(16.dp),
-                tonalElevation = 4.dp
+                shape = RoundedCornerShape(20.dp),
+                tonalElevation = 6.dp
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     AndroidView(
@@ -141,72 +145,97 @@ fun PreviewBottomSheet(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = if (isGyroActive) "Gyroscope Motion Active" else "Touch Drag Scrubbing",
-                    style = MaterialTheme.typography.bodyMedium
+                FilterChip(
+                    selected = isGyroActive,
+                    onClick = { isGyroActive = true },
+                    label = { Text("📱 Gyroscope Motion") },
+                    modifier = Modifier.weight(1f)
                 )
-                Switch(
-                    checked = isGyroActive,
-                    onCheckedChange = { isGyroActive = it }
+                FilterChip(
+                    selected = !isGyroActive,
+                    onClick = { isGyroActive = false },
+                    label = { Text("👆 Touch Drag") },
+                    modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                EffectMode.entries.forEach { mode ->
-                    FilterChip(
-                        selected = uiState.effectMode == mode,
-                        onClick = { onEffectModeChanged(mode) },
-                        label = {
-                            Text(
-                                when (mode) {
-                                    EffectMode.LENTICULAR -> "Lenticular"
-                                    EffectMode.FLUID_MORPH -> "Fluid Morph"
-                                    EffectMode.STEPPED_FLIP -> "Stepped Flip"
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Transition Mode",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        EffectMode.entries.forEach { mode ->
+                            FilterChip(
+                                selected = uiState.effectMode == mode,
+                                onClick = { onEffectModeChanged(mode) },
+                                label = {
+                                    Text(
+                                        when (mode) {
+                                            EffectMode.LENTICULAR -> "Lenticular"
+                                            EffectMode.FLUID_MORPH -> "Fluid Morph"
+                                            EffectMode.STEPPED_FLIP -> "Stepped Flip"
+                                        }
+                                    )
                                 }
                             )
                         }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Motion Sensitivity", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            text = "${uiState.sensitivityDegrees.roundToInt()}°",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    Slider(
+                        value = uiState.sensitivityDegrees,
+                        onValueChange = { rawVal ->
+                            val closest = sensitivityCheckpoints.minByOrNull { abs(it - rawVal) } ?: rawVal
+                            onSensitivityChanged(closest)
+                        },
+                        valueRange = 10.0f..60.0f,
+                        steps = 5
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = "Tilt Sensitivity", style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        text = "${uiState.sensitivityDegrees.roundToInt()}°",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                Slider(
-                    value = uiState.sensitivityDegrees,
-                    onValueChange = onSensitivityChanged,
-                    valueRange = 10.0f..60.0f
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Button(
                 onClick = onApply,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp)
+                    .height(54.dp),
+                shape = RoundedCornerShape(14.dp)
             ) {
-                Text(text = "Apply as Live Wallpaper", style = MaterialTheme.typography.labelLarge)
+                Text(text = "Apply as Live Wallpaper", style = MaterialTheme.typography.titleMedium)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
