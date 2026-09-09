@@ -22,9 +22,6 @@ class MotionSensorManager(context: Context) : SensorEventListener {
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
 
-    private val _tiltFlow = MutableStateFlow(0.0f)
-    val tiltFlow: StateFlow<Float> = _tiltFlow.asStateFlow()
-
     private var onTiltCallback: ((Float) -> Unit)? = null
 
     var currentAxis: TiltAxis = TiltAxis.HORIZONTAL
@@ -97,7 +94,6 @@ class MotionSensorManager(context: Context) : SensorEventListener {
         }
 
         val smoothed = filter.filter(normalized)
-        _tiltFlow.value = smoothed
         onTiltCallback?.invoke(smoothed)
     }
 
