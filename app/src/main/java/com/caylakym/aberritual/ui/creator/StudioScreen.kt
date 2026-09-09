@@ -22,10 +22,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -34,7 +36,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,7 +47,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.caylakym.aberritual.R
 import com.caylakym.aberritual.data.model.EffectMode
 import com.caylakym.aberritual.data.model.TiltAxis
 import com.caylakym.aberritual.ui.preview.PreviewBottomSheet
@@ -75,8 +78,15 @@ fun StudioScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Aberritual Studio") }
+            CenterAlignedTopAppBar(
+                title = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_wordmark),
+                        contentDescription = "Aberritual",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.height(24.dp)
+                    )
+                }
             )
         },
         bottomBar = {
