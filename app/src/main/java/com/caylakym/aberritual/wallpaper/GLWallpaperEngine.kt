@@ -30,6 +30,7 @@ class GLWallpaperEngine(private val context: Context) {
     private var isSurfaceCreated = false
     private var isVisible = false
     private var currentTilt = 0.0f
+    private var pendingFiles: List<File>? = null
 
     init {
         val thread = HandlerThread("GLWallpaperRenderThread").apply { start() }
@@ -44,6 +45,10 @@ class GLWallpaperEngine(private val context: Context) {
             createEGLSurface(holder)
             renderer.onSurfaceCreated(context)
             isSurfaceCreated = true
+            pendingFiles?.let { files ->
+                renderer.loadLayerFiles(files)
+            }
+            drawFrame()
         }
     }
 
@@ -84,10 +89,14 @@ class GLWallpaperEngine(private val context: Context) {
     }
 
     fun updateConfig(config: WallpaperConfig, files: List<File>) {
+        pendingFiles = files
         renderHandler?.post {
             renderer.currentConfig = config
-            renderer.loadLayerFiles(files)
-            drawFrame()
+            if (isSurfaceCreated && eglContext != EGL14.EGL_NO_CONTEXT) {
+                EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)
+                renderer.loadLayerFiles(files)
+                drawFrame()
+            }
         }
     }
 
@@ -121,7 +130,7 @@ class GLWallpaperEngine(private val context: Context) {
 
         val configs = arrayOfNulls<EGLConfig>(1)
         val numConfigs = IntArray(1)
-        var success = EGL14.eglChooseConfig(
+        val success = EGL14.eglChooseConfig(
             eglDisplay,
             configAttribs,
             0,
