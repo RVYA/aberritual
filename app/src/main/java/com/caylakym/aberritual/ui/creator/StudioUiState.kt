@@ -15,6 +15,7 @@ data class StudioUiState(
     val invertAxis: Boolean = false,
     val chromaticAberration: Boolean = false,
     val lpi: Float = 30.0f,
+    val wrapAround: Boolean = false,
     val isImporting: Boolean = false,
     val isPreviewOpen: Boolean = false,
     val isSaved: Boolean = false,
@@ -28,7 +29,8 @@ data class StudioUiState(
             sensitivityDegrees = sensitivityDegrees,
             invertAxis = invertAxis,
             chromaticAberration = chromaticAberration,
-            lpi = lpi
+            lpi = lpi,
+            wrapAround = wrapAround
         )
     }
 }

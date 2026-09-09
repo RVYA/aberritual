@@ -43,7 +43,8 @@ class StudioViewModel(
                 sensitivityDegrees = config.sensitivityDegrees,
                 invertAxis = config.invertAxis,
                 chromaticAberration = config.chromaticAberration,
-                lpi = config.lpi
+                lpi = config.lpi,
+                wrapAround = config.wrapAround
             )
         }
     }
@@ -116,6 +117,10 @@ class StudioViewModel(
 
     fun setLpi(lpi: Float) {
         _uiState.update { it.copy(lpi = lpi) }
+    }
+
+    fun toggleWrapAround() {
+        _uiState.update { it.copy(wrapAround = !it.wrapAround) }
     }
 
     fun openPreview() {

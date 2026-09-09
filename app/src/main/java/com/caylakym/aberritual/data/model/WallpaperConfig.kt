@@ -7,5 +7,6 @@ data class WallpaperConfig(
     val sensitivityDegrees: Float = 20.0f,
     val invertAxis: Boolean = false,
     val chromaticAberration: Boolean = false,
-    val lpi: Float = 30.0f
+    val lpi: Float = 30.0f,
+    val wrapAround: Boolean = false
 )

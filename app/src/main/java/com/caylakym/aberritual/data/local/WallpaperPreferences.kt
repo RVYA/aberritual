@@ -34,6 +34,7 @@ class WallpaperPreferences(context: Context) {
                 .putBoolean(KEY_INVERT_AXIS, config.invertAxis)
                 .putBoolean(KEY_CHROMATIC, config.chromaticAberration)
                 .putFloat(KEY_LPI, config.lpi)
+                .putBoolean(KEY_WRAP_AROUND, config.wrapAround)
         }
     }
 
@@ -67,6 +68,7 @@ class WallpaperPreferences(context: Context) {
         val invertAxis = prefs.getBoolean(KEY_INVERT_AXIS, false)
         val chromatic = prefs.getBoolean(KEY_CHROMATIC, false)
         val lpi = prefs.getFloat(KEY_LPI, 30.0f)
+        val wrapAround = prefs.getBoolean(KEY_WRAP_AROUND, false)
 
         return WallpaperConfig(
             layers = layers.sortedBy { it.order },
@@ -75,7 +77,8 @@ class WallpaperPreferences(context: Context) {
             sensitivityDegrees = sensitivity,
             invertAxis = invertAxis,
             chromaticAberration = chromatic,
-            lpi = lpi
+            lpi = lpi,
+            wrapAround = wrapAround
         )
     }
 
@@ -88,6 +91,7 @@ class WallpaperPreferences(context: Context) {
         private const val KEY_INVERT_AXIS = "key_invert_axis"
         private const val KEY_CHROMATIC = "key_chromatic"
         private const val KEY_LPI = "key_lpi"
+        private const val KEY_WRAP_AROUND = "key_wrap_around"
 
         private const val KEY_LAYER_ID = "id"
         private const val KEY_LAYER_PATH = "path"
