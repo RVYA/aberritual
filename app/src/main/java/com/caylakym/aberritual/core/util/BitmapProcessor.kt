@@ -3,9 +3,12 @@ package com.caylakym.aberritual.core.util
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Matrix
+import android.graphics.Paint
 import android.net.Uri
 import android.os.Build
+import android.media.ExifInterface
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.max
@@ -22,9 +25,14 @@ class BitmapProcessor(private val context: Context) {
             val sampledBitmap = decodeSampledBitmapFromUri(sourceUri, targetWidth, targetHeight)
                 ?: return false
 
-            val croppedBitmap = centerCropAndScale(sampledBitmap, targetWidth, targetHeight)
-            if (croppedBitmap != sampledBitmap) {
+            val orientedBitmap = applyAutoOrientation(sourceUri, sampledBitmap)
+            val croppedBitmap = centerCropAndScale(orientedBitmap, targetWidth, targetHeight)
+
+            if (orientedBitmap != sampledBitmap) {
                 sampledBitmap.recycle()
+            }
+            if (croppedBitmap != orientedBitmap) {
+                orientedBitmap.recycle()
             }
 
             FileOutputStream(destinationFile).use { outputStream ->
@@ -38,9 +46,41 @@ class BitmapProcessor(private val context: Context) {
 
             croppedBitmap.recycle()
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
+    }
+
+    private fun applyAutoOrientation(uri: Uri, bitmap: Bitmap): Bitmap {
+        var rotationDegrees = 0f
+
+        try {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                val exif = ExifInterface(stream)
+                val orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+                rotationDegrees = when (orientation) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                    ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                    ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                    else -> 0f
+                }
+            }
+        } catch (_: Exception) {}
+
+        val effectiveWidth = if (rotationDegrees == 90f || rotationDegrees == 270f) bitmap.height else bitmap.width
+        val effectiveHeight = if (rotationDegrees == 90f || rotationDegrees == 270f) bitmap.width else bitmap.height
+
+        if (effectiveWidth > effectiveHeight) {
+            rotationDegrees = (rotationDegrees + 90f) % 360f
+        }
+
+        if (rotationDegrees == 0f) return bitmap
+
+        val matrix = Matrix().apply { postRotate(rotationDegrees) }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
     private fun decodeSampledBitmapFromUri(
@@ -105,12 +145,12 @@ class BitmapProcessor(private val context: Context) {
         val top = (targetHeight - scaledHeight) / 2f
 
         val output = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-        val canvas = android.graphics.Canvas(output)
+        val canvas = Canvas(output)
         val matrix = Matrix().apply {
             postScale(scale, scale)
             postTranslate(left, top)
         }
-        val paint = android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG)
+        val paint = Paint(Paint.FILTER_BITMAP_FLAG)
         canvas.drawBitmap(src, matrix, paint)
 
         return output
