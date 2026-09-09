@@ -44,9 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import com.caylakym.aberritual.data.model.EffectMode
 import com.caylakym.aberritual.data.model.TiltAxis
@@ -62,11 +61,10 @@ fun StudioScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val configuration = LocalConfiguration.current
-    val density = LocalDensity.current
+    val windowInfo = LocalWindowInfo.current
 
-    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.roundToPx() }
-    val screenHeightPx = with(density) { configuration.screenHeightDp.dp.roundToPx() }
+    val screenWidthPx = windowInfo.containerSize.width
+    val screenHeightPx = windowInfo.containerSize.height
 
     val sensitivityCheckpoints = remember { listOf(10f, 15f, 20f, 25f, 30f, 45f, 60f) }
 
@@ -191,7 +189,7 @@ fun StudioScreen(
                         }
                     }
                 } else {
-                    itemsIndexed(uiState.layers, key = { _, layer -> layer.id }) { index, layer ->
+                    itemsIndexed(uiState.layers, key = { _, layer -> layer.id }) { index, _ ->
                         val layerFile = uiState.layerFiles.getOrNull(index)
                         val bitmap = remember(layerFile?.absolutePath) {
                             layerFile?.let { if (it.exists()) BitmapFactory.decodeFile(it.absolutePath) else null }
