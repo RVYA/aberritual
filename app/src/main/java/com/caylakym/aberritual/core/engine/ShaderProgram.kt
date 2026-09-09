@@ -96,6 +96,8 @@ class ShaderProgram {
         val compileStatus = IntArray(1)
         GLES20.glGetShaderiv(shaderId, GLES20.GL_COMPILE_STATUS, compileStatus, 0)
         if (compileStatus[0] == 0) {
+            val log = GLES20.glGetShaderInfoLog(shaderId)
+            android.util.Log.e("ShaderProgram", "Shader compile failed: $log")
             GLES20.glDeleteShader(shaderId)
             return 0
         }
@@ -113,6 +115,8 @@ class ShaderProgram {
         val linkStatus = IntArray(1)
         GLES20.glGetProgramiv(progId, GLES20.GL_LINK_STATUS, linkStatus, 0)
         if (linkStatus[0] == 0) {
+            val log = GLES20.glGetProgramInfoLog(progId)
+            android.util.Log.e("ShaderProgram", "Program link failed: $log")
             GLES20.glDeleteProgram(progId)
             return 0
         }
