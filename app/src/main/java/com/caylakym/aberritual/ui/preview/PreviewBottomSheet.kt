@@ -42,7 +42,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.caylakym.aberritual.core.sensor.MotionSensorManager
 import com.caylakym.aberritual.data.model.EffectMode
 import com.caylakym.aberritual.ui.creator.StudioUiState
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,8 +61,6 @@ fun PreviewBottomSheet(
     var isGyroActive by remember { mutableStateOf(true) }
     var touchTilt by remember { mutableFloatStateOf(0.0f) }
     var glViewInstance by remember { mutableStateOf<LenticularGLView?>(null) }
-
-    val sensitivityCheckpoints = remember { listOf(10f, 15f, 20f, 25f, 30f, 45f, 60f) }
 
     LaunchedEffect(glViewInstance, uiState.layers, uiState.effectMode, uiState.lpi, uiState.chromaticAberration) {
         glViewInstance?.updateConfig(uiState.toWallpaperConfig(), uiState.layerFiles)
@@ -217,11 +214,11 @@ fun PreviewBottomSheet(
                     Slider(
                         value = uiState.sensitivityDegrees,
                         onValueChange = { rawVal ->
-                            val closest = sensitivityCheckpoints.minByOrNull { abs(it - rawVal) } ?: rawVal
-                            onSensitivityChanged(closest)
+                            val snapped = ((rawVal / 10f).roundToInt() * 10).toFloat().coerceIn(10f, 60f)
+                            onSensitivityChanged(snapped)
                         },
                         valueRange = 10.0f..60.0f,
-                        steps = 5
+                        steps = 4
                     )
                 }
             }

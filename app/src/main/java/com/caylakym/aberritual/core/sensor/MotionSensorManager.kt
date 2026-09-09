@@ -6,9 +6,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import com.caylakym.aberritual.data.model.TiltAxis
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlin.math.PI
 
 class MotionSensorManager(context: Context) : SensorEventListener {
@@ -25,7 +22,7 @@ class MotionSensorManager(context: Context) : SensorEventListener {
     private var onTiltCallback: ((Float) -> Unit)? = null
 
     var currentAxis: TiltAxis = TiltAxis.HORIZONTAL
-    var sensitivityDegrees: Float = 25.0f
+    var sensitivityDegrees: Float = 20.0f
     var invertAxis: Boolean = false
 
     private var pitchBaseline: Float? = null

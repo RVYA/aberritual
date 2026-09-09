@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import com.caylakym.aberritual.data.model.EffectMode
 import com.caylakym.aberritual.data.model.TiltAxis
 import com.caylakym.aberritual.ui.preview.PreviewBottomSheet
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,8 +64,6 @@ fun StudioScreen(
 
     val screenWidthPx = windowInfo.containerSize.width
     val screenHeightPx = windowInfo.containerSize.height
-
-    val sensitivityCheckpoints = remember { listOf(10f, 15f, 20f, 25f, 30f, 45f, 60f) }
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 5)
@@ -339,11 +336,11 @@ fun StudioScreen(
                             Slider(
                                 value = uiState.sensitivityDegrees,
                                 onValueChange = { rawVal ->
-                                    val closest = sensitivityCheckpoints.minByOrNull { abs(it - rawVal) } ?: rawVal
-                                    viewModel.setSensitivity(closest)
+                                    val snapped = ((rawVal / 10f).roundToInt() * 10).toFloat().coerceIn(10f, 60f)
+                                    viewModel.setSensitivity(snapped)
                                 },
                                 valueRange = 10.0f..60.0f,
-                                steps = 5
+                                steps = 4
                             )
 
                             if (uiState.effectMode == EffectMode.LENTICULAR) {

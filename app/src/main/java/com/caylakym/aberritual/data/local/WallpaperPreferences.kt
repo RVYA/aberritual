@@ -8,6 +8,7 @@ import com.caylakym.aberritual.data.model.TiltAxis
 import com.caylakym.aberritual.data.model.WallpaperConfig
 import org.json.JSONArray
 import org.json.JSONObject
+import androidx.core.content.edit
 
 class WallpaperPreferences(context: Context) {
 
@@ -25,15 +26,15 @@ class WallpaperPreferences(context: Context) {
             }
         }
 
-        prefs.edit()
-            .putString(KEY_LAYERS_DATA, layersJson.toString())
-            .putString(KEY_EFFECT_MODE, config.effectMode.id)
-            .putString(KEY_TILT_AXIS, config.tiltAxis.id)
-            .putFloat(KEY_SENSITIVITY, config.sensitivityDegrees)
-            .putBoolean(KEY_INVERT_AXIS, config.invertAxis)
-            .putBoolean(KEY_CHROMATIC, config.chromaticAberration)
-            .putFloat(KEY_LPI, config.lpi)
-            .apply()
+        prefs.edit {
+            putString(KEY_LAYERS_DATA, layersJson.toString())
+                .putString(KEY_EFFECT_MODE, config.effectMode.id)
+                .putString(KEY_TILT_AXIS, config.tiltAxis.id)
+                .putFloat(KEY_SENSITIVITY, config.sensitivityDegrees)
+                .putBoolean(KEY_INVERT_AXIS, config.invertAxis)
+                .putBoolean(KEY_CHROMATIC, config.chromaticAberration)
+                .putFloat(KEY_LPI, config.lpi)
+        }
     }
 
     fun loadConfig(): WallpaperConfig {
@@ -62,7 +63,7 @@ class WallpaperPreferences(context: Context) {
         val axisId = prefs.getString(KEY_TILT_AXIS, TiltAxis.HORIZONTAL.id)
         val tiltAxis = TiltAxis.entries.find { it.id == axisId } ?: TiltAxis.HORIZONTAL
 
-        val sensitivity = prefs.getFloat(KEY_SENSITIVITY, 25.0f)
+        val sensitivity = prefs.getFloat(KEY_SENSITIVITY, 20.0f)
         val invertAxis = prefs.getBoolean(KEY_INVERT_AXIS, false)
         val chromatic = prefs.getBoolean(KEY_CHROMATIC, false)
         val lpi = prefs.getFloat(KEY_LPI, 30.0f)
