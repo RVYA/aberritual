@@ -31,6 +31,7 @@ class MotionSensorManager(context: Context) : SensorEventListener {
     var sensitivityDegrees: Float = 25.0f
     var invertAxis: Boolean = false
 
+    private var pitchBaseline: Float? = null
     private var isListening = false
 
     fun startListening(
@@ -44,6 +45,7 @@ class MotionSensorManager(context: Context) : SensorEventListener {
         sensitivityDegrees = sensitivity
         invertAxis = invert
         onTiltCallback = onTilt
+        pitchBaseline = null
         filter.reset()
 
         rotationSensor?.let {
@@ -57,6 +59,7 @@ class MotionSensorManager(context: Context) : SensorEventListener {
         sensorManager.unregisterListener(this)
         isListening = false
         onTiltCallback = null
+        pitchBaseline = null
         filter.reset()
     }
 
@@ -76,7 +79,14 @@ class MotionSensorManager(context: Context) : SensorEventListener {
 
         val rawAngle = when (currentAxis) {
             TiltAxis.HORIZONTAL -> rollDegrees
-            TiltAxis.VERTICAL -> pitchDegrees
+            TiltAxis.VERTICAL -> {
+                if (pitchBaseline == null) {
+                    pitchBaseline = pitchDegrees
+                } else {
+                    pitchBaseline = pitchBaseline!! * 0.992f + pitchDegrees * 0.008f
+                }
+                pitchDegrees - (pitchBaseline ?: pitchDegrees)
+            }
         }
 
         val clampedAngle = rawAngle.coerceIn(-sensitivityDegrees, sensitivityDegrees)
