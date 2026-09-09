@@ -36,8 +36,8 @@ class AberritualWallpaperService : WallpaperService() {
                     }
 
                     sensorManager.currentAxis = config.tiltAxis
-                    sensorManager.sensitivityDegrees = config.sensitivity
-                    sensorManager.invertAxis = config.invertTilt
+                    sensorManager.sensitivityDegrees = config.sensitivityDegrees
+                    sensorManager.invertAxis = config.invertAxis
 
                     glEngine.updateConfig(config, layerFiles)
                 }
