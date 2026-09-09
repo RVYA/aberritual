@@ -28,6 +28,8 @@ class ShaderProgram {
         private set
     var uResolutionLoc: Int = -1
         private set
+    var uWrapAroundLoc: Int = -1
+        private set
 
     fun loadFromAssets(
         context: Context,
@@ -84,6 +86,7 @@ class ShaderProgram {
         uLpiLoc = GLES20.glGetUniformLocation(programId, "u_LPI")
         uChromaticLoc = GLES20.glGetUniformLocation(programId, "u_ChromaticAberration")
         uResolutionLoc = GLES20.glGetUniformLocation(programId, "u_Resolution")
+        uWrapAroundLoc = GLES20.glGetUniformLocation(programId, "u_WrapAround")
     }
 
     private fun compileShader(type: Int, code: String): Int {

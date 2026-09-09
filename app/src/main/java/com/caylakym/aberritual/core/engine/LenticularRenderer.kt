@@ -103,6 +103,7 @@ class LenticularRenderer {
         GLES20.glUniform1i(shaderProgram.uModeLoc, modeIndex)
         GLES20.glUniform1f(shaderProgram.uLpiLoc, currentConfig.lpi)
         GLES20.glUniform1i(shaderProgram.uChromaticLoc, if (currentConfig.chromaticAberration) 1 else 0)
+        GLES20.glUniform1i(shaderProgram.uWrapAroundLoc, if (currentConfig.wrapAround) 1 else 0)
         GLES20.glUniform2f(
             shaderProgram.uResolutionLoc,
             viewportWidth.toFloat(),

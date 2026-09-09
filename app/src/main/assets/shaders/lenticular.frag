@@ -13,6 +13,7 @@ uniform float u_TiltAngle;
 uniform int u_Mode;
 uniform float u_LPI;
 uniform int u_ChromaticAberration;
+uniform int u_WrapAround;
 uniform vec2 u_Resolution;
 
 vec4 sampleLayer(int idx, vec2 uv) {
@@ -46,13 +47,27 @@ void main() {
         return;
     }
 
-    float normTilt = clamp((u_TiltAngle + 1.0) * 0.5, 0.0, 1.0);
-    float maxIdx = float(u_LayerCount - 1);
-    float continuousIdx = normTilt * maxIdx;
+    int baseIdx;
+    int nextIdx;
+    float t;
 
-    int baseIdx = int(clamp(floor(continuousIdx), 0.0, maxIdx));
-    int nextIdx = int(clamp(floor(continuousIdx) + 1.0, 0.0, maxIdx));
-    float t = fract(continuousIdx);
+    if (u_WrapAround == 1) {
+        float totalCount = float(u_LayerCount);
+        float rawTilt = (u_TiltAngle + 1.0) * 0.5;
+        float scaled = rawTilt * totalCount;
+        float wrapped = mod(scaled, totalCount);
+        if (wrapped < 0.0) wrapped += totalCount;
+        baseIdx = int(floor(wrapped));
+        nextIdx = int(mod(float(baseIdx + 1), totalCount));
+        t = fract(wrapped);
+    } else {
+        float normTilt = clamp((u_TiltAngle + 1.0) * 0.5, 0.0, 1.0);
+        float maxIdx = float(u_LayerCount - 1);
+        float continuousIdx = normTilt * maxIdx;
+        baseIdx = int(clamp(floor(continuousIdx), 0.0, maxIdx));
+        nextIdx = int(clamp(floor(continuousIdx) + 1.0, 0.0, maxIdx));
+        t = fract(continuousIdx);
+    }
 
     float aberrationActive = (u_ChromaticAberration == 1) ? 1.0 : 0.0;
     float transAberration = aberrationActive * 4.0 * t * (1.0 - t);
