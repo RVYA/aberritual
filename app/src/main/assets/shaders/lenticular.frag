@@ -55,18 +55,18 @@ void main() {
         float lensPeriod = max(u_Resolution.x / max(u_LPI * 6.0, 1.0), 2.0);
         float lensPhase = mod(gl_FragCoord.x, lensPeriod) / lensPeriod;
         float shiftedIdx = continuousIdx + (lensPhase - 0.5) * 1.5;
-        int activeIdx = clamp(int(floor(shiftedIdx + 0.5)), 0, u_LayerCount - 1);
+        int activeIdx = int(clamp(floor(shiftedIdx + 0.5), 0.0, maxIdx));
         gl_FragColor = sampleWithAberration(activeIdx, v_TexCoord, aberrationStrength * 0.5);
     } else if (u_Mode == 1) {
-        int baseIdx = int(floor(continuousIdx));
-        int nextIdx = min(baseIdx + 1, u_LayerCount - 1);
+        int baseIdx = int(clamp(floor(continuousIdx), 0.0, maxIdx));
+        int nextIdx = int(clamp(floor(continuousIdx) + 1.0, 0.0, maxIdx));
         float frac = fract(continuousIdx);
 
         vec4 colA = sampleWithAberration(baseIdx, v_TexCoord, aberrationStrength * (1.0 - frac));
         vec4 colB = sampleWithAberration(nextIdx, v_TexCoord, aberrationStrength * frac);
         gl_FragColor = mix(colA, colB, frac);
     } else {
-        int activeIdx = clamp(int(floor(continuousIdx + 0.5)), 0, u_LayerCount - 1);
+        int activeIdx = int(clamp(floor(continuousIdx + 0.5), 0.0, maxIdx));
         gl_FragColor = sampleLayer(activeIdx, v_TexCoord);
     }
 }
