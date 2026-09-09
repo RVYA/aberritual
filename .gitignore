@@ -1,19 +1,29 @@
 *.iml
-.gradle
+.gradle/
 /local.properties
-.idea
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+local.properties
+.idea/
 .DS_Store
-/build
+
+# Build Outputs & Binary Packages
+build/
+*/build/
+app/build/
+app/release/
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+
+# Signing Keystores (Security Critical)
+*.jks
+*.keystore
+
+# Native & Profiling
 /captures
 .externalNativeBuild
 .cxx
-local.properties
 
 # Local Agentic Cache
 .agents
