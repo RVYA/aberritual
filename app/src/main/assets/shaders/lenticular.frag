@@ -27,7 +27,7 @@ vec4 sampleWithAberration(int idx, vec2 uv, float strength) {
     if (strength <= 0.0001) {
         return sampleLayer(idx, uv);
     }
-    vec2 offset = vec2(strength * 0.008, 0.0);
+    vec2 offset = vec2(strength * 0.025, 0.0);
     float r = sampleLayer(idx, clamp(uv + offset, 0.0, 1.0)).r;
     float g = sampleLayer(idx, uv).g;
     float b = sampleLayer(idx, clamp(uv - offset, 0.0, 1.0)).b;
@@ -49,24 +49,37 @@ void main() {
     float normTilt = clamp((u_TiltAngle + 1.0) * 0.5, 0.0, 1.0);
     float maxIdx = float(u_LayerCount - 1);
     float continuousIdx = normTilt * maxIdx;
-    float aberrationStrength = (u_ChromaticAberration == 1) ? 1.0 : 0.0;
+
+    int baseIdx = int(clamp(floor(continuousIdx), 0.0, maxIdx));
+    int nextIdx = int(clamp(floor(continuousIdx) + 1.0, 0.0, maxIdx));
+    float t = fract(continuousIdx);
+
+    float aberrationActive = (u_ChromaticAberration == 1) ? 1.0 : 0.0;
+    float transAberration = aberrationActive * 4.0 * t * (1.0 - t);
+
+    if (baseIdx == nextIdx || t <= 0.001) {
+        gl_FragColor = sampleLayer(baseIdx, v_TexCoord);
+        return;
+    }
 
     if (u_Mode == 0) {
-        float lensPeriod = max(u_Resolution.x / max(u_LPI * 6.0, 1.0), 2.0);
-        float lensPhase = mod(gl_FragCoord.x, lensPeriod) / lensPeriod;
-        float shiftedIdx = continuousIdx + (lensPhase - 0.5) * 1.5;
-        int activeIdx = int(clamp(floor(shiftedIdx + 0.5), 0.0, maxIdx));
-        gl_FragColor = sampleWithAberration(activeIdx, v_TexCoord, aberrationStrength * 0.5);
-    } else if (u_Mode == 1) {
-        int baseIdx = int(clamp(floor(continuousIdx), 0.0, maxIdx));
-        int nextIdx = int(clamp(floor(continuousIdx) + 1.0, 0.0, maxIdx));
-        float frac = fract(continuousIdx);
+        float dwellT = smoothstep(0.12, 0.88, t);
+        float lpiDensity = max(u_LPI, 10.0);
+        float lensCoord = fract(v_TexCoord.x * lpiDensity);
+        float lensAngle = (lensCoord - 0.5) * 0.6;
+        float sweep = clamp((dwellT - 0.5) * 1.8 + lensAngle + 0.5, 0.0, 1.0);
+        float rasterFactor = smoothstep(0.35, 0.65, sweep);
 
-        vec4 colA = sampleWithAberration(baseIdx, v_TexCoord, aberrationStrength * (1.0 - frac));
-        vec4 colB = sampleWithAberration(nextIdx, v_TexCoord, aberrationStrength * frac);
-        gl_FragColor = mix(colA, colB, frac);
+        vec4 colA = sampleWithAberration(baseIdx, v_TexCoord, transAberration * (1.0 - rasterFactor));
+        vec4 colB = sampleWithAberration(nextIdx, v_TexCoord, transAberration * rasterFactor);
+        gl_FragColor = mix(colA, colB, rasterFactor);
+    } else if (u_Mode == 1) {
+        float morphBlend = smoothstep(0.0, 1.0, t);
+        vec4 colA = sampleWithAberration(baseIdx, v_TexCoord, transAberration * (1.0 - morphBlend));
+        vec4 colB = sampleWithAberration(nextIdx, v_TexCoord, transAberration * morphBlend);
+        gl_FragColor = mix(colA, colB, morphBlend);
     } else {
-        int activeIdx = int(clamp(floor(continuousIdx + 0.5), 0.0, maxIdx));
+        int activeIdx = (t < 0.5) ? baseIdx : nextIdx;
         gl_FragColor = sampleLayer(activeIdx, v_TexCoord);
     }
 }
