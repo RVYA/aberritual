@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">aberritual</string>
+    <string name="app_name">Aberritual</string>
+    <string name="wallpaper_label">Aberritual Live Wallpaper</string>
+    <string name="wallpaper_description">Interactive physical lenticular live wallpaper driven by device motion and tilt.</string>
 </resources>
