@@ -26,7 +26,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -52,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import com.caylakym.aberritual.data.model.EffectMode
 import com.caylakym.aberritual.data.model.TiltAxis
 import com.caylakym.aberritual.ui.preview.PreviewBottomSheet
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,6 +67,8 @@ fun StudioScreen(
 
     val screenWidthPx = with(density) { configuration.screenWidthDp.dp.roundToPx() }
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.roundToPx() }
+
+    val sensitivityCheckpoints = remember { listOf(10f, 15f, 20f, 25f, 30f, 45f, 60f) }
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 5)
@@ -84,7 +86,7 @@ fun StudioScreen(
         },
         bottomBar = {
             Surface(
-                tonalElevation = 8.dp,
+                tonalElevation = 6.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -99,7 +101,10 @@ fun StudioScreen(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(if (uiState.layers.isEmpty()) "Import Photos" else "Replace Photos")
                     }
@@ -107,7 +112,10 @@ fun StudioScreen(
                     Button(
                         onClick = { viewModel.openPreview() },
                         enabled = uiState.layers.size >= 2,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Preview & Apply")
                     }
@@ -126,7 +134,7 @@ fun StudioScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator()
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Processing & optimizing layers...", style = MaterialTheme.typography.bodyMedium)
+                    Text("Processing & auto-orienting layers...", style = MaterialTheme.typography.bodyMedium)
                 }
             }
         } else {
@@ -135,10 +143,10 @@ fun StudioScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Lenticular Layers (${uiState.layers.size}/5)",
                         style = MaterialTheme.typography.titleMedium
@@ -150,13 +158,14 @@ fun StudioScreen(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                            ),
+                            shape = RoundedCornerShape(16.dp)
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(32.dp),
+                                    .padding(28.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
@@ -190,7 +199,10 @@ fun StudioScreen(
 
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                            ),
+                            shape = RoundedCornerShape(14.dp)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -204,19 +216,19 @@ fun StudioScreen(
                                         contentDescription = "Layer $index",
                                         modifier = Modifier
                                             .size(56.dp)
-                                            .clip(RoundedCornerShape(8.dp)),
+                                            .clip(RoundedCornerShape(10.dp)),
                                         contentScale = ContentScale.Crop
                                     )
                                 } else {
                                     Surface(
                                         modifier = Modifier
                                             .size(56.dp)
-                                            .clip(RoundedCornerShape(8.dp)),
-                                        color = MaterialTheme.colorScheme.surfaceVariant
+                                            .clip(RoundedCornerShape(10.dp)),
+                                        color = MaterialTheme.colorScheme.surfaceContainerHigh
                                     ) {}
                                 }
 
-                                Spacer(modifier = Modifier.width(16.dp))
+                                Spacer(modifier = Modifier.width(14.dp))
 
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -224,7 +236,7 @@ fun StudioScreen(
                                         style = MaterialTheme.typography.titleSmall
                                     )
                                     Text(
-                                        text = if (index == 0) "Left / Top angle" else if (index == uiState.layers.size - 1) "Right / Bottom angle" else "Mid transition",
+                                        text = if (index == 0) "Left angle" else if (index == uiState.layers.size - 1) "Right angle" else "Transition stop",
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
@@ -254,121 +266,133 @@ fun StudioScreen(
                 }
 
                 item {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    Text(text = "Optical Effect & Physics", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(text = "Optical Physics & Motion", style = MaterialTheme.typography.titleMedium)
                 }
 
                 item {
-                    Text(text = "Transition Mode", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
+                    Card(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        ),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
-                        EffectMode.entries.forEach { mode ->
-                            FilterChip(
-                                selected = uiState.effectMode == mode,
-                                onClick = { viewModel.setEffectMode(mode) },
-                                label = {
-                                    Text(
-                                        when (mode) {
-                                            EffectMode.LENTICULAR -> "Lenticular"
-                                            EffectMode.FLUID_MORPH -> "Fluid Morph"
-                                            EffectMode.STEPPED_FLIP -> "Stepped Flip"
-                                        }
-                                    )
-                                }
-                            )
-                        }
-                    }
-                }
-
-                item {
-                    Text(text = "Tilt Orientation Axis", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        TiltAxis.entries.forEach { axis ->
-                            FilterChip(
-                                selected = uiState.tiltAxis == axis,
-                                onClick = { viewModel.setTiltAxis(axis) },
-                                label = {
-                                    Text(
-                                        when (axis) {
-                                            TiltAxis.HORIZONTAL -> "Horizontal Roll"
-                                            TiltAxis.VERTICAL -> "Vertical Pitch"
-                                        }
-                                    )
-                                }
-                            )
-                        }
-                    }
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Motion Sensitivity", style = MaterialTheme.typography.bodyMedium)
-                        Text(text = "${uiState.sensitivityDegrees.roundToInt()}°", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Slider(
-                        value = uiState.sensitivityDegrees,
-                        onValueChange = { viewModel.setSensitivity(it) },
-                        valueRange = 10.0f..60.0f
-                    )
-                }
-
-                if (uiState.effectMode == EffectMode.LENTICULAR) {
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            Text(text = "Virtual LPI (Lens Density)", style = MaterialTheme.typography.bodyMedium)
-                            Text(text = "${uiState.lpi.roundToInt()} LPI", style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "Transition Mode", style = MaterialTheme.typography.labelLarge)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                EffectMode.entries.forEach { mode ->
+                                    FilterChip(
+                                        selected = uiState.effectMode == mode,
+                                        onClick = { viewModel.setEffectMode(mode) },
+                                        label = {
+                                            Text(
+                                                when (mode) {
+                                                    EffectMode.LENTICULAR -> "Lenticular"
+                                                    EffectMode.FLUID_MORPH -> "Fluid Morph"
+                                                    EffectMode.STEPPED_FLIP -> "Stepped Flip"
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+
+                            Text(text = "Tilt Axis", style = MaterialTheme.typography.labelLarge)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                TiltAxis.entries.forEach { axis ->
+                                    FilterChip(
+                                        selected = uiState.tiltAxis == axis,
+                                        onClick = { viewModel.setTiltAxis(axis) },
+                                        label = {
+                                            Text(
+                                                when (axis) {
+                                                    TiltAxis.HORIZONTAL -> "Horizontal Roll (Natural)"
+                                                    TiltAxis.VERTICAL -> "Vertical Pitch (Relative)"
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = "Motion Sensitivity", style = MaterialTheme.typography.labelLarge)
+                                Text(
+                                    text = "${uiState.sensitivityDegrees.roundToInt()}°",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            Slider(
+                                value = uiState.sensitivityDegrees,
+                                onValueChange = { rawVal ->
+                                    val closest = sensitivityCheckpoints.minByOrNull { abs(it - rawVal) } ?: rawVal
+                                    viewModel.setSensitivity(closest)
+                                },
+                                valueRange = 10.0f..60.0f,
+                                steps = 5
+                            )
+
+                            if (uiState.effectMode == EffectMode.LENTICULAR) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = "Virtual LPI (Lens Density)", style = MaterialTheme.typography.labelLarge)
+                                    Text(text = "${uiState.lpi.roundToInt()} LPI", style = MaterialTheme.typography.bodyMedium)
+                                }
+                                Slider(
+                                    value = uiState.lpi,
+                                    onValueChange = { viewModel.setLpi(it) },
+                                    valueRange = 10.0f..60.0f
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = "Chromatic Aberration (RGB Shift)", style = MaterialTheme.typography.bodyMedium)
+                                Switch(
+                                    checked = uiState.chromaticAberration,
+                                    onCheckedChange = { viewModel.toggleChromaticAberration() }
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = "Invert Tilt Direction", style = MaterialTheme.typography.bodyMedium)
+                                Switch(
+                                    checked = uiState.invertAxis,
+                                    onCheckedChange = { viewModel.toggleInvertAxis() }
+                                )
+                            }
                         }
-                        Slider(
-                            value = uiState.lpi,
-                            onValueChange = { viewModel.setLpi(it) },
-                            valueRange = 10.0f..60.0f
-                        )
                     }
                 }
 
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Chromatic Aberration (RGB Shift)", style = MaterialTheme.typography.bodyMedium)
-                        Switch(
-                            checked = uiState.chromaticAberration,
-                            onCheckedChange = { viewModel.toggleChromaticAberration() }
-                        )
-                    }
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Invert Tilt Direction", style = MaterialTheme.typography.bodyMedium)
-                        Switch(
-                            checked = uiState.invertAxis,
-                            onCheckedChange = { viewModel.toggleInvertAxis() }
-                        )
-                    }
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
