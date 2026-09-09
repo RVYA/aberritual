@@ -382,6 +382,18 @@ fun StudioScreen(
                                     onCheckedChange = { viewModel.toggleInvertAxis() }
                                 )
                             }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = "Wrap-Around Loop (Continuous)", style = MaterialTheme.typography.bodyMedium)
+                                Switch(
+                                    checked = uiState.wrapAround,
+                                    onCheckedChange = { viewModel.toggleWrapAround() }
+                                )
+                            }
                         }
                     }
                 }
