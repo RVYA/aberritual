@@ -17,6 +17,7 @@ class LenticularGLView(context: Context) : GLSurfaceView(context) {
 
     init {
         setEGLContextClientVersion(2)
+        setZOrderMediaOverlay(true)
         setRenderer(object : Renderer {
             override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
                 renderer.onSurfaceCreated(context)
@@ -24,10 +25,12 @@ class LenticularGLView(context: Context) : GLSurfaceView(context) {
                 pendingFiles?.let { files ->
                     renderer.loadLayerFiles(files)
                 }
+                requestRender()
             }
 
             override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
                 renderer.onSurfaceChanged(width, height)
+                requestRender()
             }
 
             override fun onDrawFrame(gl: GL10?) {
